@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import type { Agent } from '@/types';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -76,6 +77,12 @@ export function AgentDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Agen', href: '/agents' },
+        { label: agent.fullName },
+      ]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

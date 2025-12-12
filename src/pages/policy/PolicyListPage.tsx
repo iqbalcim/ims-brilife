@@ -41,6 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { ExportButton } from '@/components/ExportButton'
 import type { Policy, PolicyStatus, ProductCode, PaginatedResponse } from '@/types'
 
 const statusColors: Record<PolicyStatus, string> = {
@@ -241,12 +242,27 @@ export function PolicyListPage() {
             Kelola semua polis asuransi
           </p>
         </div>
-        <Button asChild>
-          <Link to="/policies/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Polis
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <ExportButton
+            data={policies}
+            filename="polis"
+            columns={[
+              { key: 'policyNumber', header: 'No. Polis' },
+              { key: 'productName', header: 'Produk' },
+              { key: 'insuredPersonId', header: 'ID Tertanggung' },
+              { key: 'premiumAmount', header: 'Premi' },
+              { key: 'sumAssured', header: 'Uang Pertanggungan' },
+              { key: 'status', header: 'Status' },
+              { key: 'effectiveDate', header: 'Tanggal Efektif' },
+            ]}
+          />
+          <Button asChild>
+            <Link to="/policies/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Polis
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

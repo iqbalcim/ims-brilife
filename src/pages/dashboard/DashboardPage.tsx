@@ -11,7 +11,20 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts'
 
 interface Stats {
   total: number
@@ -41,6 +54,9 @@ const productLabels: Record<string, string> = {
   ENDOWMENT: 'Endowment',
   HEALTH: 'Kesehatan',
 }
+
+// Chart colors
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8']
 
 export function DashboardPage() {
   const [policyStats, setPolicyStats] = useState<Stats | null>(null)
@@ -78,6 +94,26 @@ export function DashboardPage() {
       maximumFractionDigits: 0,
     }).format(value)
   }
+
+  // Prepare chart data for product distribution
+  const productChartData = useMemo(() => {
+    if (!policyStats?.byProductCode) return []
+    return Object.entries(policyStats.byProductCode).map(([code, count]) => ({
+      name: productLabels[code] || code,
+      value: count,
+    }))
+  }, [policyStats])
+
+  // Prepare chart data for policy status
+  const statusChartData = useMemo(() => {
+    if (!policyStats) return []
+    return [
+      { name: 'Aktif', value: policyStats.active, fill: '#22c55e' },
+      { name: 'Pending', value: policyStats.pending, fill: '#eab308' },
+      { name: 'Lapsed', value: policyStats.lapsed, fill: '#f97316' },
+      { name: 'Berakhir', value: policyStats.terminated, fill: '#ef4444' },
+    ].filter(item => item.value > 0)
+  }, [policyStats])
 
   if (loading) {
     return (
@@ -218,21 +254,30 @@ export function DashboardPage() {
             <CardTitle>Distribusi Produk</CardTitle>
             <CardDescription>Jumlah polis per jenis produk</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {policyStats?.byProductCode && Object.entries(policyStats.byProductCode).map(([code, count]) => (
-              <div key={code} className="flex items-center justify-between">
-                <span className="text-sm">{productLabels[code] || code}</span>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 rounded-full bg-primary"
-                    style={{
-                      width: `${Math.max(20, (count / policyStats.total) * 100)}px`
-                    }}
-                  />
-                  <Badge variant="secondary">{count}</Badge>
-                </div>
-              </div>
-            ))}
+          <CardContent>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={productChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                    labelLine={false}
+                  >
+                    {productChartData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

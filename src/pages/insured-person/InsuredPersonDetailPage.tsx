@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { FileUpload } from '@/components/FileUpload'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import type { InsuredPerson, PersonStatus, Gender, MaritalStatus, IncomeRange } from '@/types'
 
 const personFileTypes = [
@@ -160,6 +161,12 @@ export function InsuredPersonDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[
+        { label: 'Tertanggung', href: '/insured-persons' },
+        { label: person.fullName },
+      ]} />
+
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
