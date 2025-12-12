@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from '@/store/authStore';
 
 // Mock fetch
-global.fetch = vi.fn();
+const fetchMock = vi.fn();
+globalThis.fetch = fetchMock;
 
 describe('AuthStore', () => {
   beforeEach(() => {
@@ -28,7 +29,7 @@ describe('AuthStore', () => {
 
   describe('login', () => {
     it('should set loading state when logging in', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -72,7 +73,7 @@ describe('AuthStore', () => {
         user: mockUser,
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
@@ -94,7 +95,7 @@ describe('AuthStore', () => {
     });
 
     it('should set error on failed login', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: false,
         json: () =>
           Promise.resolve({
@@ -115,7 +116,7 @@ describe('AuthStore', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+      fetchMock.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await useAuthStore
         .getState()
@@ -145,7 +146,7 @@ describe('AuthStore', () => {
         isAuthenticated: true,
       });
 
-      (global.fetch as any).mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ success: true }),
       });

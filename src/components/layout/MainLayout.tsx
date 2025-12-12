@@ -4,9 +4,11 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
+import { useLocalStorage } from '@/hooks'
 
 export function MainLayout() {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // Use custom hook for persistent sidebar state
+  const [isCollapsed, setIsCollapsed] = useLocalStorage('brilife_sidebar_collapsed', false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   return (
@@ -35,7 +37,7 @@ export function MainLayout() {
         <main
           className={cn(
             'flex-1 overflow-auto p-4 md:p-6',
-            'bg-muted/30'
+            'bg-gray-50'
           )}
         >
           <Outlet />

@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Plus, Trash2, Loader2, Upload, FileText, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { usePolicy } from '@/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,8 +61,16 @@ export function PolicyFormPage() {
   const isEditing = Boolean(id)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Use custom hook for CRUD operations
+  const {
+    fetchPolicyById,
+    createPolicy,
+    updatePolicy,
+    isCreating,
+    isUpdating,
+  } = usePolicy()
+
   const [loading, setLoading] = useState(isEditing)
-  const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadType, setUploadType] = useState('SPAJ')
   const [documents, setDocuments] = useState<Document[]>([])
@@ -127,74 +136,51 @@ export function PolicyFormPage() {
   useEffect(() => {
     if (!isEditing) return
 
-    const fetchPolicy = async () => {
-      try {
-        const response = await fetch(`/api/policies/${id}`)
-        const data = await response.json()
-
-        if (data.success) {
-          const policy = data.data
-          form.reset({
-            productCode: policy.productCode,
-            productName: policy.productName,
-            insuredPersonId: policy.insuredPersonId,
-            agentId: policy.agentId,
-            premiumAmount: policy.premiumAmount,
-            premiumFrequency: policy.premiumFrequency,
-            sumAssured: policy.sumAssured,
-            applicationDate: policy.applicationDate,
-            effectiveDate: policy.effectiveDate,
-            maturityDate: policy.maturityDate,
-            status: policy.status,
-            beneficiaries: policy.beneficiaries.map((b: any) => ({
-              name: b.name,
-              relationship: b.relationship,
-              identityNumber: b.identityNumber,
-              phoneNumber: b.phoneNumber,
-              percentage: b.percentage,
-              dateOfBirth: b.dateOfBirth,
-            })),
-            notes: policy.notes || '',
-          })
-          setDocuments(policy.documents || [])
-        } else {
-          toast.error('Polis tidak ditemukan')
-          navigate('/policies')
-        }
-      } catch (error) {
-        toast.error('Gagal memuat data polis')
-      } finally {
-        setLoading(false)
+    const loadPolicy = async () => {
+      const policy = await fetchPolicyById(id!)
+      if (policy) {
+        form.reset({
+          productCode: policy.productCode,
+          productName: policy.productName,
+          insuredPersonId: policy.insuredPersonId,
+          agentId: policy.agentId,
+          premiumAmount: policy.premiumAmount,
+          premiumFrequency: policy.premiumFrequency,
+          sumAssured: policy.sumAssured,
+          applicationDate: policy.applicationDate,
+          effectiveDate: policy.effectiveDate,
+          maturityDate: policy.maturityDate,
+          status: policy.status,
+          beneficiaries: policy.beneficiaries.map((b: any) => ({
+            name: b.name,
+            relationship: b.relationship,
+            identityNumber: b.identityNumber,
+            phoneNumber: b.phoneNumber,
+            percentage: b.percentage,
+            dateOfBirth: b.dateOfBirth,
+          })),
+          notes: policy.notes || '',
+        })
+        setDocuments(policy.documents || [])
+      } else {
+        navigate('/policies')
       }
+      setLoading(false)
     }
 
-    fetchPolicy()
-  }, [id, isEditing, form, navigate])
+    loadPolicy()
+  }, [id, isEditing, form, navigate, fetchPolicyById])
 
   const onSubmit = async (data: PolicyFormValues) => {
-    setSubmitting(true)
-    try {
-      const url = isEditing ? `/api/policies/${id}` : '/api/policies'
-      const method = isEditing ? 'PUT' : 'POST'
+    let result
+    if (isEditing && id) {
+      result = await updatePolicy(id, data as any)
+    } else {
+      result = await createPolicy(data as any)
+    }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast.success(isEditing ? 'Polis berhasil diperbarui' : 'Polis berhasil dibuat')
-        navigate(`/policies/${result.data.id}`)
-      } else {
-        toast.error(result.message || 'Gagal menyimpan polis')
-      }
-    } catch (error) {
-      toast.error('Gagal menyimpan polis')
-    } finally {
-      setSubmitting(false)
+    if (result) {
+      navigate(`/policies/${result.id}`)
     }
   }
 
@@ -779,8 +765,8 @@ export function PolicyFormPage() {
             <Button type="button" variant="outline" asChild>
               <Link to="/policies">Batal</Link>
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? (
+            <Button type="submit" disabled={isCreating || isUpdating}>
+              {(isCreating || isUpdating) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menyimpan...

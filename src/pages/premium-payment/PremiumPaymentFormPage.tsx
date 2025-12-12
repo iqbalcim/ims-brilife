@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePremiumPayment } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,8 +46,15 @@ export function PremiumPaymentFormPage() {
   const navigate = useNavigate();
   const isEditing = Boolean(id);
 
+  const {
+    fetchPaymentById,
+    createPayment,
+    updatePayment,
+    isCreating,
+    isUpdating,
+  } = usePremiumPayment();
+
   const [loading, setLoading] = useState(isEditing);
-  const [submitting, setSubmitting] = useState(false);
   const [policies, setPolicies] = useState<{ id: string; policyNumber: string; productName: string }[]>([]);
 
   const form = useForm<PaymentFormValues>({
@@ -84,62 +92,39 @@ export function PremiumPaymentFormPage() {
 
   // Fetch payment data if editing
   useEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing || !id) return;
 
-    const fetchPayment = async () => {
-      try {
-        const response = await fetch(`/api/premium-payments/${id}`);
-        const data = await response.json();
-
-        if (data.success) {
-          const payment = data.data;
-          form.reset({
-            policyId: payment.policyId,
-            amount: payment.amount,
-            dueDate: payment.dueDate,
-            paymentDate: payment.paymentDate || '',
-            method: payment.method || '',
-            status: payment.status,
-            notes: payment.notes || '',
-          });
-        } else {
-          toast.error('Pembayaran tidak ditemukan');
-          navigate('/premium-payments');
-        }
-      } catch {
-        toast.error('Gagal memuat data pembayaran');
-      } finally {
-        setLoading(false);
+    const loadPayment = async () => {
+      const payment = await fetchPaymentById(id);
+      if (payment) {
+        form.reset({
+          policyId: payment.policyId,
+          amount: payment.amount,
+          dueDate: payment.dueDate,
+          paymentDate: payment.paymentDate || '',
+          method: payment.method || '',
+          status: payment.status,
+          notes: payment.notes || '',
+        });
+      } else {
+        navigate('/premium-payments');
       }
+      setLoading(false);
     };
 
-    fetchPayment();
-  }, [id, isEditing, form, navigate]);
+    loadPayment();
+  }, [id, isEditing, form, navigate, fetchPaymentById]);
 
   const onSubmit = async (data: PaymentFormValues) => {
-    setSubmitting(true);
-    try {
-      const url = isEditing ? `/api/premium-payments/${id}` : '/api/premium-payments';
-      const method = isEditing ? 'PUT' : 'POST';
+    let result;
+    if (isEditing && id) {
+      result = await updatePayment(id, data as any);
+    } else {
+      result = await createPayment(data as any);
+    }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(isEditing ? 'Pembayaran berhasil diperbarui' : 'Pembayaran berhasil dibuat');
-        navigate(`/premium-payments/${result.data.id}`);
-      } else {
-        toast.error(result.message || 'Gagal menyimpan pembayaran');
-      }
-    } catch {
-      toast.error('Gagal menyimpan pembayaran');
-    } finally {
-      setSubmitting(false);
+    if (result) {
+      navigate(`/premium-payments/${result.id}`);
     }
   };
 
@@ -322,8 +307,8 @@ export function PremiumPaymentFormPage() {
             <Button type="button" variant="outline" asChild>
               <Link to="/premium-payments">Batal</Link>
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? (
+            <Button type="submit" disabled={isCreating || isUpdating}>
+              {(isCreating || isUpdating) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menyimpan...

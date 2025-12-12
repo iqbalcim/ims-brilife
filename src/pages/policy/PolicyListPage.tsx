@@ -1,9 +1,8 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Plus,
   Search,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -13,6 +12,8 @@ import {
   Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useDebounce, usePolicy } from '@/hooks'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,19 +46,19 @@ import { ExportButton } from '@/components/ExportButton'
 import type { Policy, PolicyStatus, ProductCode, PaginatedResponse } from '@/types'
 
 const statusColors: Record<PolicyStatus, string> = {
-  DRAFT: 'bg-gray-500',
-  SUBMITTED: 'bg-blue-500',
-  PENDING_MEDICAL: 'bg-orange-500',
-  PENDING_DOCUMENT: 'bg-yellow-500',
-  PENDING_APPROVAL: 'bg-indigo-500',
-  APPROVED: 'bg-teal-500',
-  ACTIVE: 'bg-green-500',
-  LAPSED: 'bg-red-400',
-  REINSTATEMENT: 'bg-amber-500',
-  PAID_UP: 'bg-purple-500',
-  SURRENDER: 'bg-pink-500',
-  CLAIM_PROCESS: 'bg-cyan-500',
-  TERMINATED: 'bg-gray-700',
+  DRAFT: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
+  SUBMITTED: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200',
+  PENDING_MEDICAL: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200',
+  PENDING_DOCUMENT: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200',
+  PENDING_APPROVAL: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200',
+  APPROVED: 'bg-teal-100 text-teal-700 hover:bg-teal-200 border-teal-200',
+  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
+  LAPSED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200',
+  REINSTATEMENT: 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200',
+  PAID_UP: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200',
+  SURRENDER: 'bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200',
+  CLAIM_PROCESS: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200 border-cyan-200',
+  TERMINATED: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
 }
 
 const statusLabels: Record<PolicyStatus, string> = {
@@ -88,9 +89,9 @@ export function PolicyListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [policies, setPolicies] = useState<Policy[]>([])
   const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null)
+  const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null)
+  const [localSearch, setLocalSearch] = useState(searchParams.get('search') || '')
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -98,8 +99,11 @@ export function PolicyListPage() {
     totalPages: 0,
   })
 
+  // Use custom hooks
+  const debouncedSearch = useDebounce(localSearch, 300)
+  const { deletePolicy, isDeleting } = usePolicy()
+
   // Get filter values from URL
-  const search = searchParams.get('search') || ''
   const status = searchParams.get('status') || ''
   const productCode = searchParams.get('productCode') || ''
   const sortBy = searchParams.get('sortBy') || 'createdAt'
@@ -112,7 +116,7 @@ export function PolicyListPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10',
-        search,
+        search: debouncedSearch,
         status,
         productCode,
         sortBy,
@@ -133,16 +137,25 @@ export function PolicyListPage() {
     }
   }
 
+  // Effect to sync debounced search with URL
   useEffect(() => {
-    fetchPolicies()
-  }, [search, status, productCode, sortBy, sortOrder, page])
-
-  const handleSearch = (value: string) => {
     setSearchParams((prev) => {
-      prev.set('search', value)
+      if (debouncedSearch) {
+        prev.set('search', debouncedSearch)
+      } else {
+        prev.delete('search')
+      }
       prev.set('page', '1')
       return prev
     })
+  }, [debouncedSearch, setSearchParams])
+
+  useEffect(() => {
+    fetchPolicies()
+  }, [debouncedSearch, status, productCode, sortBy, sortOrder, page])
+
+  const handleSearch = (value: string) => {
+    setLocalSearch(value)
   }
 
   const handleStatusFilter = (value: string) => {
@@ -192,54 +205,29 @@ export function PolicyListPage() {
   }
 
   const handleDelete = async () => {
-    if (!selectedPolicy) return
+    if (!policyToDelete) return
 
-    setDeleting(selectedPolicy.id)
-    try {
-      const response = await fetch(`/api/policies/${selectedPolicy.id}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success('Polis berhasil dihapus')
-        fetchPolicies()
-      } else {
-        toast.error(data.message || 'Gagal menghapus polis')
-      }
-    } catch (error) {
-      toast.error('Gagal menghapus polis')
-    } finally {
-      setDeleting(null)
-      setDeleteDialogOpen(false)
-      setSelectedPolicy(null)
+    // Use hook's delete function
+    const success = await deletePolicy(policyToDelete.id)
+    if (success) {
+      fetchPolicies()
     }
+    setDeleteDialogOpen(false)
+    setPolicyToDelete(null)
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value)
-  }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Daftar Polis</h2>
-          <p className="text-muted-foreground">
-            Kelola semua polis asuransi
+          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Daftar Polis
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Kelola dan pantau semua polis asuransi Anda dengan mudah
           </p>
         </div>
         <div className="flex gap-2">
@@ -256,7 +244,7 @@ export function PolicyListPage() {
               { key: 'effectiveDate', header: 'Tanggal Efektif' },
             ]}
           />
-          <Button asChild>
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md transition-all hover:shadow-lg">
             <Link to="/policies/new">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Polis
@@ -266,14 +254,14 @@ export function PolicyListPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <CardContent>
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Cari nomor polis, nama produk, atau tertanggung..."
-                value={search}
+                value={localSearch}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
               />
@@ -305,35 +293,35 @@ export function PolicyListPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('policyNumber')}
-                >
-                  No. Polis {sortBy === 'policyNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead>Produk</TableHead>
-                <TableHead>Tertanggung</TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('premiumAmount')}
-                >
-                  Premi {sortBy === 'premiumAmount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('createdAt')}
-                >
-                  Dibuat {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
+              <TableHeader className="bg-gray-50/50">
+                <TableRow className="hover:bg-transparent border-b">
+                  <TableHead
+                    className="cursor-pointer font-semibold text-gray-900"
+                    onClick={() => handleSort('policyNumber')}
+                  >
+                    No. Polis {sortBy === 'policyNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900">Produk</TableHead>
+                  <TableHead className="font-semibold text-gray-900">Tertanggung</TableHead>
+                  <TableHead
+                    className="cursor-pointer font-semibold text-gray-900"
+                    onClick={() => handleSort('premiumAmount')}
+                  >
+                    Premi {sortBy === 'premiumAmount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                  <TableHead
+                    className="cursor-pointer font-semibold text-gray-900"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    Dibuat {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="text-right font-semibold text-gray-900">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {loading ? (
                 [...Array(5)].map((_, i) => (
@@ -358,7 +346,7 @@ export function PolicyListPage() {
                 </TableRow>
               ) : (
                 policies.map((policy) => (
-                  <TableRow key={policy.id}>
+                  <TableRow key={policy.id} className="hover:bg-blue-50/40 transition-colors">
                     <TableCell className="font-medium">{policy.policyNumber}</TableCell>
                     <TableCell>
                       <div>
@@ -371,7 +359,7 @@ export function PolicyListPage() {
                     <TableCell>{policy.insuredPerson?.fullName || '-'}</TableCell>
                     <TableCell>{formatCurrency(policy.premiumAmount)}</TableCell>
                     <TableCell>
-                      <Badge className={statusColors[policy.status]}>
+                      <Badge variant="outline" className={`${statusColors[policy.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
                         {statusLabels[policy.status]}
                       </Badge>
                     </TableCell>
@@ -392,7 +380,7 @@ export function PolicyListPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            setSelectedPolicy(policy)
+                            setPolicyToDelete(policy)
                             setDeleteDialogOpen(true)
                           }}
                         >
@@ -444,7 +432,7 @@ export function PolicyListPage() {
           <DialogHeader>
             <DialogTitle>Hapus Polis</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus polis <strong>{selectedPolicy?.policyNumber}</strong>?
+              Apakah Anda yakin ingin menghapus polis <strong>{policyToDelete?.policyNumber}</strong>?
               Tindakan ini tidak dapat dibatalkan.
             </DialogDescription>
           </DialogHeader>
@@ -455,9 +443,9 @@ export function PolicyListPage() {
             <Button
               variant="destructive"
               onClick={handleDelete}
-              disabled={deleting !== null}
+              disabled={isDeleting}
             >
-              {deleting ? (
+              {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menghapus...

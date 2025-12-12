@@ -11,7 +11,8 @@ import {
   Users,
   Loader2,
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { useDebounce, useInsuredPerson } from '@/hooks'
+import { formatDate, calculateAge } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -43,9 +44,9 @@ import {
 import type { InsuredPerson, PersonStatus, Gender, PaginatedResponse } from '@/types'
 
 const statusColors: Record<PersonStatus, string> = {
-  ACTIVE: 'bg-green-500',
-  INACTIVE: 'bg-gray-500',
-  BLACKLISTED: 'bg-red-500',
+  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
+  INACTIVE: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
+  BLACKLISTED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200',
 }
 
 const statusLabels: Record<PersonStatus, string> = {
@@ -61,11 +62,10 @@ const genderLabels: Record<Gender, string> = {
 
 export function InsuredPersonListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [persons, setPersons] = useState<InsuredPerson[]>([])
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [localSearch, setLocalSearch] = useState(searchParams.get('search') || '')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedPerson, setSelectedPerson] = useState<InsuredPerson | null>(null)
+  const [personToDelete, setPersonToDelete] = useState<InsuredPerson | null>(null)
+  const [persons, setPersons] = useState<InsuredPerson[]>([])
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -73,12 +73,23 @@ export function InsuredPersonListPage() {
     totalPages: 0,
   })
 
-  const search = searchParams.get('search') || ''
+  // Use custom hooks
+  const debouncedSearch = useDebounce(localSearch, 300)
+  const { 
+    deleteInsuredPerson, 
+    isDeleting, 
+    isLoading,
+    selectPerson,
+    selectedPerson,
+  } = useInsuredPerson()
+
   const status = searchParams.get('status') || ''
   const gender = searchParams.get('gender') || ''
   const sortBy = searchParams.get('sortBy') || 'createdAt'
   const sortOrder = searchParams.get('sortOrder') || 'desc'
   const page = parseInt(searchParams.get('page') || '1')
+
+  const [loading, setLoading] = useState(true)
 
   const fetchPersons = async () => {
     setLoading(true)
@@ -86,7 +97,7 @@ export function InsuredPersonListPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10',
-        search,
+        search: debouncedSearch,
         status,
         gender,
         sortBy,
@@ -101,22 +112,31 @@ export function InsuredPersonListPage() {
         setPagination(data.pagination)
       }
     } catch (error) {
-      toast.error('Gagal memuat data tertanggung')
+      // Error handled by hook
     } finally {
       setLoading(false)
     }
   }
 
+  // Sync debounced search with URL
   useEffect(() => {
-    fetchPersons()
-  }, [search, status, gender, sortBy, sortOrder, page])
-
-  const handleSearch = (value: string) => {
     setSearchParams((prev) => {
-      prev.set('search', value)
+      if (debouncedSearch) {
+        prev.set('search', debouncedSearch)
+      } else {
+        prev.delete('search')
+      }
       prev.set('page', '1')
       return prev
     })
+  }, [debouncedSearch, setSearchParams])
+
+  useEffect(() => {
+    fetchPersons()
+  }, [debouncedSearch, status, gender, sortBy, sortOrder, page])
+
+  const handleSearch = (value: string) => {
+    setLocalSearch(value)
   }
 
   const handleStatusFilter = (value: string) => {
@@ -166,47 +186,15 @@ export function InsuredPersonListPage() {
   }
 
   const handleDelete = async () => {
-    if (!selectedPerson) return
-
-    setDeleting(selectedPerson.id)
-    try {
-      const response = await fetch(`/api/insured-persons/${selectedPerson.id}`, {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success('Tertanggung berhasil dihapus')
-        fetchPersons()
-      } else {
-        toast.error(data.message || 'Gagal menghapus tertanggung')
-      }
-    } catch (error) {
-      toast.error('Gagal menghapus tertanggung')
-    } finally {
-      setDeleting(null)
-      setDeleteDialogOpen(false)
-      setSelectedPerson(null)
+    if (!personToDelete) return
+    
+    // Use hook's delete function
+    const success = await deleteInsuredPerson(personToDelete.id)
+    if (success) {
+      fetchPersons()
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date()
-    const birthDate = new Date(dateOfBirth)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
+    setDeleteDialogOpen(false)
+    setPersonToDelete(null)
   }
 
   return (
@@ -214,12 +202,14 @@ export function InsuredPersonListPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Daftar Tertanggung</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Daftar Tertanggung
+          </h2>
+          <p className="text-muted-foreground mt-1">
             Kelola data tertanggung asuransi
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md transition-all hover:shadow-lg">
           <Link to="/insured-persons/new">
             <Plus className="mr-2 h-4 w-4" />
             Tambah Tertanggung
@@ -228,14 +218,14 @@ export function InsuredPersonListPage() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <CardContent>
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Cari nama, NIK, email, atau telepon..."
-                value={search}
+                value={localSearch}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
               />
@@ -267,34 +257,34 @@ export function InsuredPersonListPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
+            <TableHeader className="bg-gray-50/50">
+              <TableRow className="hover:bg-transparent border-b">
                 <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer font-semibold text-gray-900"
                   onClick={() => handleSort('fullName')}
                 >
                   Nama {sortBy === 'fullName' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
-                <TableHead>NIK</TableHead>
-                <TableHead>Jenis Kelamin</TableHead>
+                <TableHead className="font-semibold text-gray-900">NIK</TableHead>
+                <TableHead className="font-semibold text-gray-900">Jenis Kelamin</TableHead>
                 <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer font-semibold text-gray-900"
                   onClick={() => handleSort('dateOfBirth')}
                 >
                   Usia {sortBy === 'dateOfBirth' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
-                <TableHead>Kota</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="font-semibold text-gray-900">Kota</TableHead>
+                <TableHead className="font-semibold text-gray-900">Status</TableHead>
                 <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer font-semibold text-gray-900"
                   onClick={() => handleSort('createdAt')}
                 >
                   Dibuat {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead className="text-right font-semibold text-gray-900">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -322,7 +312,7 @@ export function InsuredPersonListPage() {
                 </TableRow>
               ) : (
                 persons.map((person) => (
-                  <TableRow key={person.id}>
+                  <TableRow key={person.id} className="hover:bg-blue-50/40 transition-colors">
                     <TableCell>
                       <div>
                         <p className="font-medium">{person.fullName}</p>
@@ -334,7 +324,7 @@ export function InsuredPersonListPage() {
                     <TableCell>{calculateAge(person.dateOfBirth)} tahun</TableCell>
                     <TableCell>{person.address.city}</TableCell>
                     <TableCell>
-                      <Badge className={statusColors[person.status]}>
+                      <Badge variant="outline" className={`${statusColors[person.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
                         {statusLabels[person.status]}
                       </Badge>
                     </TableCell>
@@ -355,7 +345,7 @@ export function InsuredPersonListPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            setSelectedPerson(person)
+                            setPersonToDelete(person)
                             setDeleteDialogOpen(true)
                           }}
                         >
@@ -407,7 +397,7 @@ export function InsuredPersonListPage() {
           <DialogHeader>
             <DialogTitle>Hapus Tertanggung</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus <strong>{selectedPerson?.fullName}</strong>?
+              Apakah Anda yakin ingin menghapus <strong>{personToDelete?.fullName}</strong>?
               Tindakan ini tidak dapat dibatalkan.
             </DialogDescription>
           </DialogHeader>
@@ -418,9 +408,9 @@ export function InsuredPersonListPage() {
             <Button
               variant="destructive"
               onClick={handleDelete}
-              disabled={deleting !== null}
+              disabled={isDeleting}
             >
-              {deleting ? (
+              {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menghapus...

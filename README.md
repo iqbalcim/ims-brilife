@@ -127,4 +127,3 @@ npm run test -- --run
 ## 📄 License
 
 Private - PT BRI Life Technical Test
-# ims-brilife

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, CreditCard, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, CreditCard, Calendar, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePremiumPayment } from '@/hooks';
+import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -47,6 +49,9 @@ export function PremiumPaymentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showDelete, setShowDelete] = useState(false);
 
+  // Use custom hook for delete operation
+  const { deletePayment, isDeleting } = usePremiumPayment();
+
   useEffect(() => {
     const fetchPayment = async () => {
       try {
@@ -68,26 +73,12 @@ export function PremiumPaymentDetailPage() {
   }, [id, navigate]);
 
   const handleDelete = async () => {
-    try {
-      const response = await fetch(`/api/premium-payments/${id}`, { method: 'DELETE' });
-      const data = await response.json();
-      if (data.success) {
-        toast.success('Pembayaran berhasil dihapus');
-        navigate('/premium-payments');
-      } else {
-        toast.error(data.message);
-      }
-    } catch {
-      toast.error('Gagal menghapus pembayaran');
+    if (!id) return;
+    const success = await deletePayment(id);
+    if (success) {
+      navigate('/premium-payments');
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
+    setShowDelete(false);
   };
 
   if (loading) {
@@ -259,8 +250,15 @@ export function PremiumPaymentDetailPage() {
             <Button variant="outline" onClick={() => setShowDelete(false)}>
               Batal
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Hapus
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

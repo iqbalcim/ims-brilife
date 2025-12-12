@@ -133,10 +133,14 @@ export function BeneficiaryListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Penerima Manfaat</h2>
-          <p className="text-muted-foreground">Kelola data penerima manfaat polis</p>
+          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Penerima Manfaat
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Kelola data penerima manfaat polis
+          </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-md transition-all hover:shadow-lg">
           <Link to="/beneficiaries/create">
             <Plus className="mr-2 h-4 w-4" />
             Tambah Penerima
@@ -146,55 +150,55 @@ export function BeneficiaryListPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
+            <Heart className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-pink-200 bg-pink-50/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pasangan</CardTitle>
+            <CardTitle className="text-sm font-medium text-pink-600">Pasangan</CardTitle>
             <Users className="h-4 w-4 text-pink-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-pink-600">{stats.byRelationship.spouse}</div>
+            <div className="text-2xl font-bold text-pink-700">{stats.byRelationship.spouse}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Anak</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-600">Anak</CardTitle>
             <Baby className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.byRelationship.child}</div>
+            <div className="text-2xl font-bold text-blue-700">{stats.byRelationship.child}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Orang Tua</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600">Orang Tua</CardTitle>
             <UserRound className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.byRelationship.parent}</div>
+            <div className="text-2xl font-bold text-green-700">{stats.byRelationship.parent}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 bg-gray-50/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Lainnya</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Lainnya</CardTitle>
             <Heart className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.byRelationship.sibling + stats.byRelationship.other}</div>
+            <div className="text-2xl font-bold text-gray-700">{stats.byRelationship.sibling + stats.byRelationship.other}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
@@ -224,7 +228,7 @@ export function BeneficiaryListPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-4">
@@ -239,28 +243,28 @@ export function BeneficiaryListPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b bg-muted/50">
+                <thead className="border-b bg-gray-50/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                       <button onClick={() => toggleSort('name')} className="flex items-center gap-1">
                         Nama <ArrowUpDown className="h-3 w-3" />
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Hubungan</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">No. Identitas</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Telepon</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hubungan</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">No. Identitas</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Telepon</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                       <button onClick={() => toggleSort('percentage')} className="flex items-center gap-1">
                         Persentase <ArrowUpDown className="h-3 w-3" />
                       </button>
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Polis</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium">Aksi</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Polis</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {beneficiaries.map((beneficiary) => (
-                    <tr key={beneficiary.id} className="border-b hover:bg-muted/50">
+                    <tr key={beneficiary.id} className="border-b hover:bg-blue-50/40 transition-colors">
                       <td className="px-4 py-3 font-medium">{beneficiary.name}</td>
                       <td className="px-4 py-3 text-sm">
                         {relationshipLabels[beneficiary.relationship]}
@@ -299,22 +303,26 @@ export function BeneficiaryListPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="icon" disabled={page === 1} onClick={() => setPage(page - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Halaman {page} dari {totalPages}
-          </span>
-          <Button variant="outline" size="icon" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      {(!loading && beneficiaries.length > 0) && (
+        <div className="flex items-center justify-between border-t px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Menampilkan {(page - 1) * 10 + 1} - {Math.min(page * 10, stats.total)} dari {stats.total} data
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium">
+                Halaman {page} dari {totalPages}
+              </span>
+              <Button variant="outline" size="icon" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
         </div>
       )}
+      </Card>
 
       {/* Delete Dialog */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

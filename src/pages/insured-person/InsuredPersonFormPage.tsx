@@ -1,23 +1,16 @@
-import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Loader2, Upload, X, FileText } from 'lucide-react'
-import { toast } from 'sonner'
+import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -25,9 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useInsuredPerson } from '@/hooks'
 import { insuredPersonSchema, type InsuredPersonFormValues } from '@/lib/validators'
 import type { Document } from '@/types'
-import { DatePicker } from '@/components/DatePicker'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, FileText, Loader2, Upload, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 export function InsuredPersonFormPage() {
   const { id } = useParams()
@@ -35,8 +35,15 @@ export function InsuredPersonFormPage() {
   const isEditing = Boolean(id)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const {
+    fetchInsuredPersonById,
+    createInsuredPerson,
+    updateInsuredPerson,
+    isCreating,
+    isUpdating,
+  } = useInsuredPerson()
+
   const [loading, setLoading] = useState(isEditing)
-  const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [documents, setDocuments] = useState<Document[]>([])
   const [uploadType, setUploadType] = useState<string>('KTP')
@@ -78,75 +85,52 @@ export function InsuredPersonFormPage() {
 
   // Fetch person data if editing
   useEffect(() => {
-    if (!isEditing) return
+    if (!isEditing || !id) return
 
-    const fetchPerson = async () => {
-      try {
-        const response = await fetch(`/api/insured-persons/${id}`)
-        const data = await response.json()
-
-        if (data.success) {
-          const person = data.data
-          form.reset({
-            fullName: person.fullName,
-            gender: person.gender,
-            dateOfBirth: person.dateOfBirth,
-            placeOfBirth: person.placeOfBirth,
-            maritalStatus: person.maritalStatus,
-            identityType: person.identityType,
-            identityNumber: person.identityNumber,
-            identityExpiry: person.identityExpiry || undefined,
-            email: person.email,
-            phoneNumber: person.phoneNumber,
-            address: person.address,
-            occupation: person.occupation,
-            companyName: person.companyName || '',
-            monthlyIncome: person.monthlyIncome,
-            height: person.height,
-            weight: person.weight,
-            isSmoker: person.isSmoker,
-            hasChronicIllness: person.hasChronicIllness,
-            chronicIllnessDetails: person.chronicIllnessDetails || '',
-          })
-          setDocuments(person.documents || [])
-        } else {
-          toast.error('Tertanggung tidak ditemukan')
-          navigate('/insured-persons')
-        }
-      } catch (error) {
-        toast.error('Gagal memuat data tertanggung')
-      } finally {
-        setLoading(false)
+    const loadPerson = async () => {
+      const person = await fetchInsuredPersonById(id)
+      if (person) {
+        form.reset({
+          fullName: person.fullName,
+          gender: person.gender,
+          dateOfBirth: person.dateOfBirth,
+          placeOfBirth: person.placeOfBirth,
+          maritalStatus: person.maritalStatus,
+          identityType: person.identityType,
+          identityNumber: person.identityNumber,
+          identityExpiry: person.identityExpiry || undefined,
+          email: person.email,
+          phoneNumber: person.phoneNumber,
+          address: person.address,
+          occupation: person.occupation,
+          companyName: person.companyName || '',
+          monthlyIncome: person.monthlyIncome,
+          height: person.height,
+          weight: person.weight,
+          isSmoker: person.isSmoker,
+          hasChronicIllness: person.hasChronicIllness,
+          chronicIllnessDetails: person.chronicIllnessDetails || '',
+        })
+        setDocuments(person.documents || [])
+      } else {
+        navigate('/insured-persons')
       }
+      setLoading(false)
     }
 
-    fetchPerson()
-  }, [id, isEditing, form, navigate])
+    loadPerson()
+  }, [id, isEditing, form, navigate, fetchInsuredPersonById])
 
   const onSubmit = async (data: InsuredPersonFormValues) => {
-    setSubmitting(true)
-    try {
-      const url = isEditing ? `/api/insured-persons/${id}` : '/api/insured-persons'
-      const method = isEditing ? 'PUT' : 'POST'
+    let result
+    if (isEditing && id) {
+      result = await updateInsuredPerson(id, data as any)
+    } else {
+      result = await createInsuredPerson(data as any)
+    }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast.success(isEditing ? 'Tertanggung berhasil diperbarui' : 'Tertanggung berhasil ditambahkan')
-        navigate(`/insured-persons/${result.data.id}`)
-      } else {
-        toast.error(result.message || 'Gagal menyimpan data')
-      }
-    } catch (error) {
-      toast.error('Gagal menyimpan data')
-    } finally {
-      setSubmitting(false)
+    if (result) {
+      navigate(`/insured-persons/${result.id}`)
     }
   }
 
@@ -565,7 +549,7 @@ export function InsuredPersonFormPage() {
               <CardTitle>Informasi Kesehatan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="height"
@@ -615,7 +599,7 @@ export function InsuredPersonFormPage() {
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormLabel className="!mt-0">Perokok</FormLabel>
+                      <FormLabel className="mt-0!">Perokok</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -631,7 +615,7 @@ export function InsuredPersonFormPage() {
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormLabel className="!mt-0">Memiliki Penyakit Kronis</FormLabel>
+                      <FormLabel className="mt-0!">Memiliki Penyakit Kronis</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -735,8 +719,8 @@ export function InsuredPersonFormPage() {
             <Button type="button" variant="outline" asChild>
               <Link to="/insured-persons">Batal</Link>
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? (
+            <Button type="submit" disabled={isCreating || isUpdating}>
+              {(isCreating || isUpdating) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menyimpan...

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 // Cleanup after each test
@@ -19,7 +19,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 // Mock matchMedia for theme testing
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -30,3 +30,20 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Mock ResizeObserver for Recharts
+globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+})) as unknown as typeof ResizeObserver;
+
+// Mock IntersectionObserver
+globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+  root: null,
+  rootMargin: '',
+  thresholds: [],
+})) as unknown as typeof IntersectionObserver;

@@ -15,6 +15,9 @@ const InsuredPersonDetailPage = lazy(() => import('@/pages/insured-person/Insure
 const PremiumPaymentListPage = lazy(() => import('@/pages/premium-payment/PremiumPaymentListPage').then(m => ({ default: m.PremiumPaymentListPage })))
 const PremiumPaymentFormPage = lazy(() => import('@/pages/premium-payment/PremiumPaymentFormPage').then(m => ({ default: m.PremiumPaymentFormPage })))
 const PremiumPaymentDetailPage = lazy(() => import('@/pages/premium-payment/PremiumPaymentDetailPage').then(m => ({ default: m.PremiumPaymentDetailPage })))
+const AgentListPage = lazy(() => import('@/pages/agent/AgentListPage').then(m => ({ default: m.AgentListPage })))
+const AgentFormPage = lazy(() => import('@/pages/agent/AgentFormPage').then(m => ({ default: m.AgentFormPage })))
+const AgentDetailPage = lazy(() => import('@/pages/agent/AgentDetailPage').then(m => ({ default: m.AgentDetailPage })))
 
 function PageLoader() {
   return (
@@ -68,6 +71,11 @@ const router = createBrowserRouter([
       { path: 'premium-payments/create', element: <Suspense fallback={<PageLoader />}><PremiumPaymentFormPage /></Suspense> },
       { path: 'premium-payments/:id', element: <Suspense fallback={<PageLoader />}><PremiumPaymentDetailPage /></Suspense> },
       { path: 'premium-payments/:id/edit', element: <Suspense fallback={<PageLoader />}><PremiumPaymentFormPage /></Suspense> },
+      // Agent
+      { path: 'agents', element: <Suspense fallback={<PageLoader />}><AgentListPage /></Suspense> },
+      { path: 'agents/new', element: <Suspense fallback={<PageLoader />}><AgentFormPage /></Suspense> },
+      { path: 'agents/:id', element: <Suspense fallback={<PageLoader />}><AgentDetailPage /></Suspense> },
+      { path: 'agents/:id/edit', element: <Suspense fallback={<PageLoader />}><AgentFormPage /></Suspense> },
     ],
   },
   { path: '*', element: <Navigate to="/dashboard" replace /> },

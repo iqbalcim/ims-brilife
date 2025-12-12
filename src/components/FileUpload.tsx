@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Trash2, X, Check, Loader2 } from 'lucide-react';
+import { Upload, FileText, Trash2, ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePagination } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -69,6 +70,17 @@ export function FileUpload({ entityType, entityId, fileTypes, title = 'Dokumen' 
   useState(() => {
     if (entityId) fetchFiles();
   });
+
+  // Use custom pagination hook for file list
+  const {
+    currentItems: paginatedFiles,
+    currentPage,
+    totalPages,
+    nextPage,
+    prevPage,
+    hasNextPage,
+    hasPrevPage,
+  } = usePagination(files, { initialPageSize: 5 });
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -189,7 +201,7 @@ export function FileUpload({ entityType, entityId, fileTypes, title = 'Dokumen' 
           <div className="text-center py-4 text-muted-foreground">Belum ada dokumen</div>
         ) : (
           <div className="space-y-2">
-            {files.map((file) => (
+            {paginatedFiles.map((file) => (
               <div
                 key={file.id}
                 className="flex items-center justify-between rounded-lg border p-3"
@@ -215,6 +227,22 @@ export function FileUpload({ entityType, entityId, fileTypes, title = 'Dokumen' 
                 </div>
               </div>
             ))}
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xs text-muted-foreground">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" onClick={prevPage} disabled={!hasPrevPage}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={nextPage} disabled={!hasNextPage}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

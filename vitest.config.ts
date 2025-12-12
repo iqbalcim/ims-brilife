@@ -9,6 +9,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/__tests__/setup.ts',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    server: {
+      deps: {
+        inline: ['parse5'],
+      },
+    },
   },
   resolve: {
     alias: {

@@ -46,7 +46,7 @@ export function Header({ onMenuClick, showMenuButton }: HeaderProps) {
             <span className="sr-only">Toggle menu</span>
           </Button>
         )}
-        <h1 className="text-lg font-semibold md:text-xl">
+        <h1 className="text-lg font-bold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Insurance Management System
         </h1>
       </div>

@@ -24,12 +24,6 @@ export function LoginPage() {
 
   const { login, isLoading, error, isAuthenticated, clearError } = useAuthStore()
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard'
-    return <Navigate to={from} replace />
-  }
-
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -37,6 +31,11 @@ export function LoginPage() {
       password: '',
     },
   })
+
+  if (isAuthenticated) {
+    const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard'
+    return <Navigate to={from} replace />
+  }
 
   const onSubmit = async (data: LoginFormData) => {
     clearError()
