@@ -12,7 +12,6 @@ import {
 } from './components'
 
 export function DashboardPage() {
-  // Use custom hooks for data fetching
   const { stats: policyStats, fetchStats: fetchPolicyStats, isLoading: policyLoading } = usePolicy()
   const { stats: insuredStats, fetchStats: fetchInsuredStats, isLoading: insuredLoading } = useInsuredPerson()
 

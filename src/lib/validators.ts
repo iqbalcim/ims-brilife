@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-// ==========================================
-// COMMON SCHEMAS
-// ==========================================
-
 export const addressSchema = z.object({
   street: z.string().min(5, 'Alamat minimal 5 karakter'),
   rt: z.string().optional(),
@@ -24,10 +20,6 @@ export const beneficiarySchema = z.object({
   dateOfBirth: z.string().min(1, 'Tanggal lahir wajib diisi'),
 });
 
-// ==========================================
-// AUTH SCHEMAS
-// ==========================================
-
 export const loginSchema = z.object({
   username: z
     .string()
@@ -40,10 +32,6 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
-
-// ==========================================
-// INSURED PERSON SCHEMAS
-// ==========================================
 
 export const insuredPersonSchema = z.object({
   fullName: z
@@ -99,10 +87,6 @@ export const insuredPersonSchema = z.object({
 
 export type InsuredPersonFormValues = z.infer<typeof insuredPersonSchema>;
 
-// ==========================================
-// POLICY SCHEMAS
-// ==========================================
-
 export const policySchema = z.object({
   policyNumber: z.string().optional(),
 
@@ -142,10 +126,6 @@ export const policySchema = z.object({
 });
 
 export type PolicyFormValues = z.infer<typeof policySchema>;
-
-// ==========================================
-// FILE UPLOAD SCHEMA
-// ==========================================
 
 export const fileUploadSchema = z.object({
   type: z.string().min(1, 'Tipe dokumen wajib dipilih'),

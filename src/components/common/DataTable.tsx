@@ -64,18 +64,18 @@ export function DataTable<T extends { id: string | number }>({
   };
 
   return (
-    <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
+    <Card className="border-0 shadow-sm ring-1 ring-inset ring-border overflow-hidden">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader className="bg-gray-50/50">
+            <TableHeader className="bg-muted/50">
               <TableRow className="hover:bg-transparent border-b">
                 {columns.map((col) => (
                   <TableHead
                     key={col.key}
                     className={cn(
-                      'font-semibold text-gray-900',
-                      col.sortable ? 'cursor-pointer select-none hover:text-gray-700' : '',
+                      'font-semibold text-foreground',
+                      col.sortable ? 'cursor-pointer select-none hover:text-muted-foreground' : '',
                       col.className
                     )}
                     onClick={() => col.sortable && handleSort(col.key)}
@@ -88,7 +88,7 @@ export function DataTable<T extends { id: string | number }>({
                         </span>
                       )}
                       {sorting && col.sortable && sorting.sortBy !== col.key && (
-                         <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-50" />
+                        <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-50" />
                       )}
                     </div>
                   </TableHead>
@@ -112,7 +112,7 @@ export function DataTable<T extends { id: string | number }>({
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-32 text-center">
                     <div className="flex flex-col items-center gap-2">
-                       <FileText className="h-8 w-8 text-muted-foreground opacity-50" />
+                      <FileText className="h-8 w-8 text-muted-foreground opacity-50" />
                       <p className="text-muted-foreground">{emptyMessage}</p>
                     </div>
                   </TableCell>
@@ -122,14 +122,14 @@ export function DataTable<T extends { id: string | number }>({
                 data.map((item) => (
                   <TableRow
                     key={item.id}
-                    className="hover:bg-blue-50/40 transition-colors border-b last:border-0"
+                    className="hover:bg-accent/40 transition-colors border-b last:border-0"
                   >
                     {columns.map((col) => (
                       <TableCell key={`${item.id}-${col.key}`} className={col.className}>
                         {col.cell
                           ? col.cell(item)
                           : (item as any)[col.key] // Fallback to direct property access
-                        } 
+                        }
                       </TableCell>
                     ))}
                   </TableRow>
@@ -141,26 +141,26 @@ export function DataTable<T extends { id: string | number }>({
 
         {/* Pagination Footer */}
         {!loading && data.length > 0 && pagination && (
-           <div className="flex items-center justify-between border-t px-4 py-3 bg-white">
+          <div className="flex items-center justify-between border-t px-4 py-3 bg-background">
             <p className="text-sm text-muted-foreground w-full md:w-auto">
               Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
             </p>
             <Pagination className="justify-end w-auto mx-0">
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => { if(pagination.page > 1) pagination.onPageChange(pagination.page - 1); }}
+                  <PaginationPrevious
+                    onClick={() => { if (pagination.page > 1) pagination.onPageChange(pagination.page - 1); }}
                     className={pagination.page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>
                 <PaginationItem>
-                   <span className="text-sm font-medium px-4">
-                      {pagination.page} / {pagination.totalPages}
-                   </span>
+                  <span className="text-sm font-medium px-4">
+                    {pagination.page} / {pagination.totalPages}
+                  </span>
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => { if(pagination.page < pagination.totalPages) pagination.onPageChange(pagination.page + 1); }}
+                  <PaginationNext
+                    onClick={() => { if (pagination.page < pagination.totalPages) pagination.onPageChange(pagination.page + 1); }}
                     className={pagination.page >= pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                   />
                 </PaginationItem>

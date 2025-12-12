@@ -1,11 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { Sidebar } from '@/components/layout/Sidebar'
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import userEvent from '@testing-library/user-event'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { describe, expect, it } from 'vitest'
 
 describe('Sidebar', () => {
-  const mockOnToggle = () => {}
+  const mockOnToggle = () => { }
 
   const renderSidebar = (isCollapsed = false) => {
     return render(
@@ -26,22 +25,26 @@ describe('Sidebar', () => {
     expect(screen.getByText('Polis')).toBeInTheDocument()
     expect(screen.getByText('Tertanggung')).toBeInTheDocument()
     expect(screen.getByText('Pembayaran')).toBeInTheDocument()
+    expect(screen.getByText('Agen')).toBeInTheDocument()
   })
 
   it('should have correct links for navigation items', () => {
     renderSidebar()
-    
+
     const dashboardLink = screen.getByText('Dashboard').closest('a')
     expect(dashboardLink).toHaveAttribute('href', '/dashboard')
-    
+
     const polisLink = screen.getByText('Polis').closest('a')
     expect(polisLink).toHaveAttribute('href', '/policies')
-    
+
     const tertanggungLink = screen.getByText('Tertanggung').closest('a')
     expect(tertanggungLink).toHaveAttribute('href', '/insured-persons')
-    
+
     const pembayaranLink = screen.getByText('Pembayaran').closest('a')
     expect(pembayaranLink).toHaveAttribute('href', '/premium-payments')
+
+    const agenLink = screen.getByText('Agen').closest('a')
+    expect(agenLink).toHaveAttribute('href', '/agents')
   })
 
   it('should show toggle button with "Tutup" text when expanded', () => {
@@ -75,6 +78,6 @@ describe('Sidebar', () => {
     // Check that SVG icons are present in navigation
     const navSection = container.querySelector('nav')
     const svgIcons = navSection?.querySelectorAll('svg')
-    expect(svgIcons?.length).toBe(4) // 4 navigation items
+    expect(svgIcons?.length).toBe(5)
   })
 })

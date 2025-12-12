@@ -1,7 +1,3 @@
-// ==========================================
-// ENUMS & TYPES
-// ==========================================
-
 export type ProductCode =
   | 'WHOLE_LIFE'
   | 'TERM_LIFE'
@@ -98,10 +94,6 @@ export type PaymentStatus =
   | 'OVERDUE'
   | 'FAILED'
   | 'REFUNDED';
-
-// ==========================================
-// INTERFACES
-// ==========================================
 
 export interface Document {
   id: string;
@@ -248,10 +240,6 @@ export interface AuthToken {
   user: Omit<User, 'password'>;
 }
 
-// ==========================================
-// API RESPONSE TYPES
-// ==========================================
-
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -274,10 +262,6 @@ export interface ApiError {
   message: string;
   code?: string;
 }
-
-// ==========================================
-// FORM TYPES
-// ==========================================
 
 export interface LoginCredentials {
   username: string;
@@ -322,10 +306,6 @@ export interface InsuredPersonFormData {
   hasChronicIllness: boolean;
   chronicIllnessDetails?: string;
 }
-
-// ==========================================
-// FILTER & SORT TYPES
-// ==========================================
 
 export interface PolicyFilters {
   search?: string;

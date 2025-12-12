@@ -1,32 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Search,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  CreditCard,
-  Check,
-  Clock,
-  XCircle,
-  AlertTriangle,
-  RotateCcw,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { useDebounce } from '@/hooks';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable, type Column } from '@/components/common/DataTable';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -35,19 +9,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { PremiumPayment, Policy } from '@/types';
-import { DataTable, type Column } from '@/components/common/DataTable';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useDebounce } from '@/hooks';
+import type { Policy, PremiumPayment } from '@/types';
+import {
+  AlertTriangle,
+  Check,
+  Clock,
+  CreditCard,
+  Edit,
+  Eye,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface PaymentWithPolicy extends PremiumPayment {
   policy?: Policy;
 }
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  PAID: { label: 'Lunas', className: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200', icon: <Check className="h-3 w-3" /> },
-  PENDING: { label: 'Menunggu', className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200', icon: <Clock className="h-3 w-3" /> },
-  OVERDUE: { label: 'Jatuh Tempo Terlewat', className: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200', icon: <AlertTriangle className="h-3 w-3" /> },
-  FAILED: { label: 'Gagal', className: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200', icon: <XCircle className="h-3 w-3" /> },
-  REFUNDED: { label: 'Dikembalikan', className: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200', icon: <RotateCcw className="h-3 w-3" /> },
+  PAID: { label: 'Lunas', className: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800', icon: <Check className="h-3 w-3" /> },
+  PENDING: { label: 'Menunggu', className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800', icon: <Clock className="h-3 w-3" /> },
+  OVERDUE: { label: 'Jatuh Tempo Terlewat', className: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800', icon: <AlertTriangle className="h-3 w-3" /> },
+  FAILED: { label: 'Gagal', className: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800', icon: <XCircle className="h-3 w-3" /> },
+  REFUNDED: { label: 'Dikembalikan', className: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800', icon: <RotateCcw className="h-3 w-3" /> },
 };
 
 const methodLabels: Record<string, string> = {
@@ -61,7 +60,7 @@ export function PremiumPaymentListPage() {
   const [payments, setPayments] = useState<PaymentWithPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [localSearch, setLocalSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -69,7 +68,6 @@ export function PremiumPaymentListPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, paid: 0, pending: 0, failed: 0, totalAmount: 0 });
 
-  // Debounce search for better performance
   const debouncedSearch = useDebounce(localSearch, 300);
 
   const fetchPayments = async () => {
@@ -240,46 +238,46 @@ export function PremiumPaymentListPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
-            <CreditCard className="h-4 w-4 text-gray-400" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-gray-500" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <div className="text-2xl font-bold text-foreground">{stats.total}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50 dark:ring-green-800 dark:bg-green-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Lunas</CardTitle>
-            <Check className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Lunas</CardTitle>
+            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.paid}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600 dark:text-green-400" /></div> : <div className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.paid}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-yellow-200 bg-yellow-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-yellow-200 bg-yellow-50/50 dark:ring-yellow-800 dark:bg-yellow-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-600">Menunggu</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium text-yellow-600 dark:text-yellow-400">Menunggu</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-yellow-600" /></div> : <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-yellow-600 dark:text-yellow-400" /></div> : <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{stats.pending}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50 dark:ring-blue-800 dark:bg-blue-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-600">Total Terbayar</CardTitle>
-            <CreditCard className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Terbayar</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-xl font-bold text-blue-700">{formatCurrency(stats.totalAmount)}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" /></div> : <div className="text-xl font-bold text-blue-700 dark:text-blue-300">{formatCurrency(stats.totalAmount)}</div>}
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
         <CardContent>
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">

@@ -1,10 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, User, Mail, Phone, Building2, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -13,13 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Agent } from '@/types';
+import { ArrowLeft, Building2, Calendar, Edit, Mail, Trash2, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  ACTIVE: { label: 'Aktif', color: 'bg-green-100 text-green-800' },
-  INACTIVE: { label: 'Tidak Aktif', color: 'bg-gray-100 text-gray-800' },
-  SUSPENDED: { label: 'Ditangguhkan', color: 'bg-red-100 text-red-800' },
+  ACTIVE: { label: 'Aktif', color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
+  INACTIVE: { label: 'Tidak Aktif', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' },
+  SUSPENDED: { label: 'Ditangguhkan', color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' },
 };
 
 export function AgentDetailPage() {

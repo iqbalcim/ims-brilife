@@ -31,7 +31,7 @@ const applyTheme = (resolvedTheme: 'light' | 'dark') => {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'system',
+      theme: 'light',
       resolvedTheme: getSystemTheme(),
 
       setTheme: (theme: Theme) => {
@@ -53,7 +53,6 @@ export const useThemeStore = create<ThemeState>()(
   )
 );
 
-// Listen for system theme changes
 if (typeof window !== 'undefined') {
   window
     .matchMedia('(prefers-color-scheme: dark)')

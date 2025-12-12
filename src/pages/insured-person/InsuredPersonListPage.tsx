@@ -36,9 +36,9 @@ import type { InsuredPerson, PersonStatus, Gender, PaginatedResponse } from '@/t
 import { DataTable, type Column } from '@/components/common/DataTable'
 
 const statusColors: Record<PersonStatus, string> = {
-  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
-  INACTIVE: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
-  BLACKLISTED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200',
+  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
+  INACTIVE: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+  BLACKLISTED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
 }
 
 const statusLabels: Record<PersonStatus, string> = {
@@ -65,11 +65,10 @@ export function InsuredPersonListPage() {
     totalPages: 0,
   })
 
-  // Use custom hooks
   const debouncedSearch = useDebounce(localSearch, 300)
-  const { 
-    deleteInsuredPerson, 
-    isDeleting, 
+  const {
+    deleteInsuredPerson,
+    isDeleting,
     selectPerson,
     stats,
     fetchStats
@@ -183,7 +182,7 @@ export function InsuredPersonListPage() {
 
   const handleDelete = async () => {
     if (!personToDelete) return
-    
+
     // Use hook's delete function
     const success = await deleteInsuredPerson(personToDelete.id)
     if (success) {
@@ -199,7 +198,7 @@ export function InsuredPersonListPage() {
       header: 'Nama',
       sortable: true,
       cell: (person) => (
-         <div>
+        <div>
           <p className="font-medium">{person.fullName}</p>
           <p className="text-xs text-muted-foreground">{person.email}</p>
         </div>
@@ -294,46 +293,46 @@ export function InsuredPersonListPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Tertanggung</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tertanggung</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-foreground">{stats.total}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50 dark:ring-green-800 dark:bg-green-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Aktif</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Aktif</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.active}</div>}
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600 dark:text-green-400" /></div> : <div className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.active}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-600">Laki-laki</CardTitle>
-             <User className="h-4 w-4 text-blue-600" />
-           </CardHeader>
-           <CardContent>
-             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-blue-700">{stats.byGender.male}</div>}
-           </CardContent>
-         </Card>
-         <Card className="border-0 shadow-sm ring-1 ring-inset ring-pink-200 bg-pink-50/50">
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-pink-600">Perempuan</CardTitle>
-             <User className="h-4 w-4 text-pink-600" />
-           </CardHeader>
-           <CardContent>
-             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-pink-600" /></div> : <div className="text-2xl font-bold text-pink-700">{stats.byGender.female}</div>}
-           </CardContent>
-         </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50 dark:ring-blue-800 dark:bg-blue-900/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-blue-600 dark:text-blue-400">Laki-laki</CardTitle>
+            <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" /></div> : <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.byGender.male}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-pink-200 bg-pink-50/50 dark:ring-pink-800 dark:bg-pink-900/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-pink-600 dark:text-pink-400">Perempuan</CardTitle>
+            <User className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-pink-600 dark:text-pink-400" /></div> : <div className="text-2xl font-bold text-pink-700 dark:text-pink-300">{stats.byGender.female}</div>}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
         <CardContent>
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
@@ -378,16 +377,16 @@ export function InsuredPersonListPage() {
         loading={loading}
         emptyMessage="Tidak ada data tertanggung"
         pagination={{
-            page: pagination.page,
-            limit: pagination.limit,
-            total: pagination.total,
-            totalPages: pagination.totalPages,
-            onPageChange: handlePageChange,
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: handlePageChange,
         }}
         sorting={{
-            sortBy,
-            sortOrder: sortOrder as 'asc' | 'desc',
-            onSort: handleSort,
+          sortBy,
+          sortOrder: sortOrder as 'asc' | 'desc',
+          onSort: handleSort,
         }}
       />
 

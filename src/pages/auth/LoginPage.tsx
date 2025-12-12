@@ -1,10 +1,4 @@
-import { useState } from 'react'
-import { useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Shield, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
@@ -14,8 +8,14 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { useAuthStore } from '@/store'
+import { Input } from '@/components/ui/input'
 import { loginSchema, type LoginFormData } from '@/lib/validators'
+import { useAuthStore } from '@/store'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff, Loader2, Shield } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 export function LoginPage() {
   const navigate = useNavigate()

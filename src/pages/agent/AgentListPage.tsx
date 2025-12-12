@@ -1,28 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Search,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  Users,
-  UserCheck,
-  UserX,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable, type Column } from '@/components/common/DataTable';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -31,20 +9,41 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Agent } from '@/types';
-import { DataTable, type Column } from '@/components/common/DataTable';
+import {
+  Edit,
+  Eye,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  UserCheck,
+  Users,
+  UserX,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: 'Aktif', className: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200' },
-  INACTIVE: { label: 'Tidak Aktif', className: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200' },
-  SUSPENDED: { label: 'Ditangguhkan', className: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' },
+  ACTIVE: { label: 'Aktif', className: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800' },
+  INACTIVE: { label: 'Tidak Aktif', className: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' },
+  SUSPENDED: { label: 'Ditangguhkan', className: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800' },
 };
 
 export function AgentListPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -203,46 +202,46 @@ export function AgentListPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Agen</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Agen</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.totalAgents}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-foreground">{stats.totalAgents}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50 dark:ring-green-800 dark:bg-green-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Aktif</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Aktif</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.activeAgents}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600 dark:text-green-400" /></div> : <div className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.activeAgents}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 bg-gray-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-muted bg-muted/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Tidak Aktif</CardTitle>
-            <UserX className="h-4 w-4 text-gray-600" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Tidak Aktif</CardTitle>
+            <UserX className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-gray-600" /></div> : <div className="text-2xl font-bold text-gray-700">{stats.inactiveAgents}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div> : <div className="text-2xl font-bold text-foreground">{stats.inactiveAgents}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-red-200 bg-red-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-red-200 bg-red-50/50 dark:ring-red-800 dark:bg-red-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">Ditangguhkan</CardTitle>
-            <UserX className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Ditangguhkan</CardTitle>
+            <UserX className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-red-600" /></div> : <div className="text-2xl font-bold text-red-700">{stats.suspendedAgents}</div>}
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-red-600 dark:text-red-400" /></div> : <div className="text-2xl font-bold text-red-700 dark:text-red-300">{stats.suspendedAgents}</div>}
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
         <CardContent>
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">

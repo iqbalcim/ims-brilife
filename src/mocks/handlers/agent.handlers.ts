@@ -33,8 +33,8 @@ export const agentHandlers = [
       );
     }
 
-    // Status filter
-    if (status) {
+    // Status filter (skip if empty or 'all')
+    if (status && status !== 'all') {
       filtered = filtered.filter((a) => a.status === status);
     }
 
@@ -84,7 +84,9 @@ export const agentHandlers = [
 
     const activeAgents = agents.filter((a) => a.status === 'ACTIVE').length;
     const inactiveAgents = agents.filter((a) => a.status === 'INACTIVE').length;
-    const suspendedAgents = agents.filter((a) => a.status === 'SUSPENDED').length;
+    const suspendedAgents = agents.filter(
+      (a) => a.status === 'SUSPENDED'
+    ).length;
     const totalPremium = agents.reduce((sum, a) => sum + a.totalPremiumYTD, 0);
     const totalPolicies = agents.reduce((sum, a) => sum + a.totalPolicies, 0);
 
@@ -98,7 +100,8 @@ export const agentHandlers = [
         totalPremiumYTD: totalPremium,
         totalPolicies,
         byLevel: {
-          AGENCY_MANAGER: agents.filter((a) => a.level === 'AGENCY_MANAGER').length,
+          AGENCY_MANAGER: agents.filter((a) => a.level === 'AGENCY_MANAGER')
+            .length,
           SENIOR: agents.filter((a) => a.level === 'SENIOR').length,
           ASSOCIATE: agents.filter((a) => a.level === 'ASSOCIATE').length,
         },
@@ -128,7 +131,7 @@ export const agentHandlers = [
   http.post('/api/agents', async ({ request }) => {
     await delay(400);
 
-    const body = await request.json() as Partial<Agent>;
+    const body = (await request.json()) as Partial<Agent>;
 
     // Generate new ID
     const maxId = agents.reduce((max, a) => {
@@ -138,7 +141,8 @@ export const agentHandlers = [
 
     const newAgent: Agent = {
       id: `AGT-${String(maxId + 1).padStart(3, '0')}`,
-      agentCode: body.agentCode || `BRL-XXX-${String(maxId + 1).padStart(3, '0')}`,
+      agentCode:
+        body.agentCode || `BRL-XXX-${String(maxId + 1).padStart(3, '0')}`,
       fullName: body.fullName || '',
       email: body.email || '',
       phone: body.phone || '',
@@ -176,7 +180,7 @@ export const agentHandlers = [
       );
     }
 
-    const body = await request.json() as Partial<Agent>;
+    const body = (await request.json()) as Partial<Agent>;
     const updatedAgent: Agent = {
       ...agents[agentIndex],
       ...body,
@@ -212,6 +216,4 @@ export const agentHandlers = [
       message: 'Agen berhasil dihapus',
     });
   }),
-
-
 ];

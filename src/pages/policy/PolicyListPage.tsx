@@ -35,19 +35,19 @@ import type { Policy, PolicyStatus, ProductCode, PaginatedResponse } from '@/typ
 import { DataTable, type Column } from '@/components/common/DataTable'
 
 const statusColors: Record<PolicyStatus, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
-  SUBMITTED: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200',
-  PENDING_MEDICAL: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200',
-  PENDING_DOCUMENT: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200',
-  PENDING_APPROVAL: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200',
-  APPROVED: 'bg-teal-100 text-teal-700 hover:bg-teal-200 border-teal-200',
-  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
-  LAPSED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200',
-  REINSTATEMENT: 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200',
-  PAID_UP: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200',
-  SURRENDER: 'bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200',
-  CLAIM_PROCESS: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200 border-cyan-200',
-  TERMINATED: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
+  DRAFT: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+  SUBMITTED: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
+  PENDING_MEDICAL: 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800',
+  PENDING_DOCUMENT: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800',
+  PENDING_APPROVAL: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
+  APPROVED: 'bg-teal-100 text-teal-700 hover:bg-teal-200 border-teal-200 dark:bg-teal-900/50 dark:text-teal-300 dark:border-teal-800',
+  ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
+  LAPSED: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
+  REINSTATEMENT: 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800',
+  PAID_UP: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800',
+  SURRENDER: 'bg-pink-100 text-pink-700 hover:bg-pink-200 border-pink-200 dark:bg-pink-900/50 dark:text-pink-300 dark:border-pink-800',
+  CLAIM_PROCESS: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200 border-cyan-200 dark:bg-cyan-900/50 dark:text-cyan-300 dark:border-cyan-800',
+  TERMINATED: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
 }
 
 const statusLabels: Record<PolicyStatus, string> = {
@@ -88,7 +88,6 @@ export function PolicyListPage() {
     totalPages: 0,
   })
 
-  // Use custom hooks
   const debouncedSearch = useDebounce(localSearch, 300)
   const { deletePolicy, isDeleting, stats, fetchStats } = usePolicy()
 
@@ -322,46 +321,46 @@ export function PolicyListPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Polis</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Polis</CardTitle>
             <Eye className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-foreground">{stats.total}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50 dark:ring-green-800 dark:bg-green-900/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">Aktif</CardTitle>
-            <Eye className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Aktif</CardTitle>
+            <Eye className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
-            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.active}</div>}
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600 dark:text-green-400" /></div> : <div className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.active}</div>}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm ring-1 ring-inset ring-emerald-200 bg-emerald-50/50">
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-600">Total Premi</CardTitle>
-             <Eye className="h-4 w-4 text-emerald-600" />
-           </CardHeader>
-           <CardContent>
-             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-emerald-600" /></div> : <div className="text-xl font-bold text-emerald-700">{formatCurrency(stats.totalPremium)}</div>}
-           </CardContent>
-         </Card>
-         <Card className="border-0 shadow-sm ring-1 ring-inset ring-amber-200 bg-amber-50/50">
-           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-amber-600">Total UP</CardTitle>
-             <Eye className="h-4 w-4 text-amber-600" />
-           </CardHeader>
-           <CardContent>
-             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-amber-600" /></div> : <div className="text-xl font-bold text-amber-700">{formatCurrency(stats.totalSumAssured)}</div>}
-           </CardContent>
-         </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-emerald-200 bg-emerald-50/50 dark:ring-emerald-800 dark:bg-emerald-900/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Total Premi</CardTitle>
+            <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-emerald-600 dark:text-emerald-400" /></div> : <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(stats.totalPremium)}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-amber-200 bg-amber-50/50 dark:ring-amber-800 dark:bg-amber-900/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-amber-600 dark:text-amber-400">Total UP</CardTitle>
+            <Eye className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-amber-600 dark:text-amber-400" /></div> : <div className="text-xl font-bold text-amber-700 dark:text-amber-300">{formatCurrency(stats.totalSumAssured)}</div>}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+      <Card className="border-0 shadow-sm ring-1 ring-inset ring-border">
         <CardContent>
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="relative flex-1">
@@ -406,18 +405,18 @@ export function PolicyListPage() {
         loading={loading}
         emptyMessage="Tidak ada data polis"
         pagination={{
-            page: pagination.page,
-            limit: pagination.limit,
-            total: pagination.total,
-            totalPages: pagination.totalPages,
-            onPageChange: handlePageChange,
+          page: pagination.page,
+          limit: pagination.limit,
+          total: pagination.total,
+          totalPages: pagination.totalPages,
+          onPageChange: handlePageChange,
         }}
         sorting={{
-            sortBy,
-            sortOrder: sortOrder as 'asc' | 'desc',
-            onSort: handleSort,
+          sortBy,
+          sortOrder: sortOrder as 'asc' | 'desc',
+          onSort: handleSort,
         }}
-        />
+      />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

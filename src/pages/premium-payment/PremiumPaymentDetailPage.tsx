@@ -23,9 +23,9 @@ interface PaymentWithPolicy extends PremiumPayment {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  PAID: { label: 'Lunas', color: 'bg-green-100 text-green-800' },
-  PENDING: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800' },
-  FAILED: { label: 'Gagal', color: 'bg-red-100 text-red-800' },
+  PAID: { label: 'Lunas', color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
+  PENDING: { label: 'Menunggu', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' },
+  FAILED: { label: 'Gagal', color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' },
 };
 
 const methodLabels: Record<string, string> = {
@@ -49,7 +49,6 @@ export function PremiumPaymentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showDelete, setShowDelete] = useState(false);
 
-  // Use custom hook for delete operation
   const { deletePayment, isDeleting } = usePremiumPayment();
 
   useEffect(() => {

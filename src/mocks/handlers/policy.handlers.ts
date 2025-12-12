@@ -53,19 +53,23 @@ export const policyHandlers = [
 
     let filteredPolicies = [...policiesData];
 
-    // Search
+    // Search - need to join insured person data first for name search
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredPolicies = filteredPolicies.filter(
-        (p) =>
+      filteredPolicies = filteredPolicies.filter((p) => {
+        const insuredPerson = mockInsuredPersons.find(
+          (ip) => ip.id === p.insuredPersonId
+        );
+        return (
           p.policyNumber.toLowerCase().includes(searchLower) ||
           p.productName.toLowerCase().includes(searchLower) ||
-          p.insuredPerson?.fullName.toLowerCase().includes(searchLower)
-      );
+          insuredPerson?.fullName.toLowerCase().includes(searchLower)
+        );
+      });
     }
 
-    // Filter by status
-    if (status) {
+    // Filter by status (skip if empty or 'all')
+    if (status && status !== 'all') {
       filteredPolicies = filteredPolicies.filter((p) => p.status === status);
     }
 

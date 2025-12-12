@@ -63,8 +63,8 @@ export const premiumPaymentHandlers = [
       );
     }
 
-    // Filter by status
-    if (status) {
+    // Filter by status (skip if empty or 'all')
+    if (status && status !== 'all') {
       filteredPayments = filteredPayments.filter((p) => p.status === status);
     }
 

@@ -1,15 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useForm, useFieldArray } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Plus, Trash2, Loader2, Upload, FileText, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { usePolicy } from '@/hooks'
+import { Combobox } from '@/components/Combobox'
+import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
 import {
   Form,
   FormControl,
@@ -18,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -25,10 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { usePolicy } from '@/hooks'
 import { policySchema, type PolicyFormValues } from '@/lib/validators'
-import type { Agent, InsuredPerson, Document, ProductCode } from '@/types'
-import { DatePicker } from '@/components/DatePicker'
-import { Combobox } from '@/components/Combobox'
+import type { Agent, Document, ProductCode } from '@/types'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, FileText, Loader2, Plus, Trash2, Upload, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useFieldArray, useForm } from 'react-hook-form'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 // Katalog Produk Asuransi - didefinisikan oleh perusahaan
 const PRODUCT_CATALOG: Record<ProductCode, { code: string; name: string }[]> = {
@@ -61,7 +60,6 @@ export function PolicyFormPage() {
   const isEditing = Boolean(id)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Use custom hook for CRUD operations
   const {
     fetchPolicyById,
     createPolicy,
@@ -652,7 +650,11 @@ export function PolicyFormPage() {
                         <FormItem>
                           <FormLabel>Tanggal Lahir</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <DatePicker
+                              value={field.value ? new Date(field.value) : undefined}
+                              onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                              placeholder="Pilih tanggal lahir"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
