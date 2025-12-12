@@ -1,0 +1,73 @@
+import type { Beneficiary } from '@/types';
+
+export const mockBeneficiaries: (Beneficiary & {
+  policyId: string;
+  createdAt: string;
+  updatedAt: string;
+})[] = [
+  {
+    id: 'BEN-001',
+    policyId: 'POL-001',
+    name: 'Dewi Lestari',
+    relationship: 'ISTRI',
+    beneficiaryType: 'PRIMARY',
+    identityNumber: '3174085501900001',
+    phoneNumber: '081234567890',
+    percentage: 50,
+    dateOfBirth: '1992-05-15',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'BEN-002',
+    policyId: 'POL-001',
+    name: 'Budi Pratama Jr',
+    relationship: 'ANAK',
+    beneficiaryType: 'PRIMARY',
+    identityNumber: '3174081512150001',
+    phoneNumber: '081234567891',
+    percentage: 50,
+    dateOfBirth: '2015-12-15',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'BEN-003',
+    policyId: 'POL-002',
+    name: 'Siti Aminah',
+    relationship: 'ORANG_TUA',
+    beneficiaryType: 'PRIMARY',
+    identityNumber: '3174086501650001',
+    phoneNumber: '081234567892',
+    percentage: 100,
+    dateOfBirth: '1965-01-10',
+    createdAt: '2025-01-05T00:00:00Z',
+    updatedAt: '2025-01-05T00:00:00Z',
+  },
+  {
+    id: 'BEN-004',
+    policyId: 'POL-003',
+    name: 'Ahmad Santoso',
+    relationship: 'SAUDARA',
+    beneficiaryType: 'PRIMARY',
+    identityNumber: '3174082003880001',
+    phoneNumber: '081234567893',
+    percentage: 70,
+    dateOfBirth: '1988-03-20',
+    createdAt: '2025-01-10T00:00:00Z',
+    updatedAt: '2025-01-10T00:00:00Z',
+  },
+  {
+    id: 'BEN-005',
+    policyId: 'POL-003',
+    name: 'Ratna Sari',
+    relationship: 'LAINNYA',
+    beneficiaryType: 'CONTINGENT',
+    identityNumber: '3174081707950001',
+    phoneNumber: '081234567894',
+    percentage: 30,
+    dateOfBirth: '1995-07-17',
+    createdAt: '2025-01-10T00:00:00Z',
+    updatedAt: '2025-01-10T00:00:00Z',
+  },
+];
