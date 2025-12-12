@@ -81,6 +81,7 @@ const router = createBrowserRouter([
   { path: '*', element: <Navigate to="/dashboard" replace /> },
 ])
 
+// End of router
 export function AppRouter() {
   return <RouterProvider router={router} />
 }

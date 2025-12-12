@@ -61,7 +61,7 @@ export function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <StatsCards policyStats={policyStats} insuredStats={insuredStats} />
+      <StatsCards policyStats={policyStats} insuredStats={insuredStats} loading={loading} />
 
       {/* Charts Row */}
       <div className="grid gap-4 lg:grid-cols-3">

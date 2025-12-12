@@ -1,31 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Plus,
   Search,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Edit,
   Trash2,
-  Users,
   Loader2,
+  Users,
+  UserCheck,
+  User,
 } from 'lucide-react'
 import { useDebounce, useInsuredPerson } from '@/hooks'
 import { formatDate, calculateAge } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
@@ -42,6 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { InsuredPerson, PersonStatus, Gender, PaginatedResponse } from '@/types'
+import { DataTable, type Column } from '@/components/common/DataTable'
 
 const statusColors: Record<PersonStatus, string> = {
   ACTIVE: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-200',
@@ -78,9 +70,9 @@ export function InsuredPersonListPage() {
   const { 
     deleteInsuredPerson, 
     isDeleting, 
-    isLoading,
     selectPerson,
-    selectedPerson,
+    stats,
+    fetchStats
   } = useInsuredPerson()
 
   const status = searchParams.get('status') || ''
@@ -120,19 +112,23 @@ export function InsuredPersonListPage() {
 
   // Sync debounced search with URL
   useEffect(() => {
-    setSearchParams((prev) => {
-      if (debouncedSearch) {
-        prev.set('search', debouncedSearch)
-      } else {
-        prev.delete('search')
-      }
-      prev.set('page', '1')
-      return prev
-    })
-  }, [debouncedSearch, setSearchParams])
+    const currentSearch = searchParams.get('search') || ''
+    if (debouncedSearch !== currentSearch) {
+      setSearchParams((prev) => {
+        if (debouncedSearch) {
+          prev.set('search', debouncedSearch)
+        } else {
+          prev.delete('search')
+        }
+        prev.set('page', '1')
+        return prev
+      })
+    }
+  }, [debouncedSearch, searchParams, setSearchParams])
 
   useEffect(() => {
     fetchPersons()
+    fetchStats()
   }, [debouncedSearch, status, gender, sortBy, sortOrder, page])
 
   const handleSearch = (value: string) => {
@@ -165,8 +161,8 @@ export function InsuredPersonListPage() {
 
   const handleSort = (field: string) => {
     setSearchParams((prev) => {
-      const currentSortBy = prev.get('sortBy')
-      const currentSortOrder = prev.get('sortOrder')
+      const currentSortBy = prev.get('sortBy') || 'createdAt'
+      const currentSortOrder = prev.get('sortOrder') || 'desc'
 
       if (currentSortBy === field) {
         prev.set('sortOrder', currentSortOrder === 'asc' ? 'desc' : 'asc')
@@ -197,6 +193,85 @@ export function InsuredPersonListPage() {
     setPersonToDelete(null)
   }
 
+  const columns: Column<InsuredPerson>[] = useMemo(() => [
+    {
+      key: 'fullName',
+      header: 'Nama',
+      sortable: true,
+      cell: (person) => (
+         <div>
+          <p className="font-medium">{person.fullName}</p>
+          <p className="text-xs text-muted-foreground">{person.email}</p>
+        </div>
+      )
+    },
+    {
+      key: 'identityNumber',
+      header: 'NIK',
+      className: 'font-mono text-sm',
+    },
+    {
+      key: 'gender',
+      header: 'Jenis Kelamin',
+      cell: (person) => genderLabels[person.gender],
+    },
+    {
+      key: 'dateOfBirth',
+      header: 'Usia',
+      sortable: true,
+      cell: (person) => `${calculateAge(person.dateOfBirth)} tahun`,
+    },
+    {
+      key: 'address',
+      header: 'Kota',
+      cell: (person) => person.address.city,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (person) => (
+        <Badge variant="outline" className={`${statusColors[person.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
+          {statusLabels[person.status]}
+        </Badge>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Dibuat',
+      sortable: true,
+      cell: (person) => formatDate(person.createdAt),
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      className: 'text-right',
+      cell: (person) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/insured-persons/${person.id}`}>
+              <Eye className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/insured-persons/${person.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setPersonToDelete(person)
+              setDeleteDialogOpen(true)
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ], []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -215,6 +290,46 @@ export function InsuredPersonListPage() {
             Tambah Tertanggung
           </Link>
         </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Tertanggung</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-green-600">Aktif</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.active}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-blue-600">Laki-laki</CardTitle>
+             <User className="h-4 w-4 text-blue-600" />
+           </CardHeader>
+           <CardContent>
+             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-blue-700">{stats.byGender.male}</div>}
+           </CardContent>
+         </Card>
+         <Card className="border-0 shadow-sm ring-1 ring-inset ring-pink-200 bg-pink-50/50">
+           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-pink-600">Perempuan</CardTitle>
+             <User className="h-4 w-4 text-pink-600" />
+           </CardHeader>
+           <CardContent>
+             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-pink-600" /></div> : <div className="text-2xl font-bold text-pink-700">{stats.byGender.female}</div>}
+           </CardContent>
+         </Card>
       </div>
 
       {/* Filters */}
@@ -256,140 +371,25 @@ export function InsuredPersonListPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-gray-50/50">
-              <TableRow className="hover:bg-transparent border-b">
-                <TableHead
-                  className="cursor-pointer font-semibold text-gray-900"
-                  onClick={() => handleSort('fullName')}
-                >
-                  Nama {sortBy === 'fullName' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="font-semibold text-gray-900">NIK</TableHead>
-                <TableHead className="font-semibold text-gray-900">Jenis Kelamin</TableHead>
-                <TableHead
-                  className="cursor-pointer font-semibold text-gray-900"
-                  onClick={() => handleSort('dateOfBirth')}
-                >
-                  Usia {sortBy === 'dateOfBirth' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="font-semibold text-gray-900">Kota</TableHead>
-                <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                <TableHead
-                  className="cursor-pointer font-semibold text-gray-900"
-                  onClick={() => handleSort('createdAt')}
-                >
-                  Dibuat {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="text-right font-semibold text-gray-900">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : persons.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">Tidak ada data tertanggung</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                persons.map((person) => (
-                  <TableRow key={person.id} className="hover:bg-blue-50/40 transition-colors">
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{person.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{person.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{person.identityNumber}</TableCell>
-                    <TableCell>{genderLabels[person.gender]}</TableCell>
-                    <TableCell>{calculateAge(person.dateOfBirth)} tahun</TableCell>
-                    <TableCell>{person.address.city}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`${statusColors[person.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
-                        {statusLabels[person.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(person.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/insured-persons/${person.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/insured-persons/${person.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setPersonToDelete(person)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-
-        {/* Pagination */}
-        {!loading && persons.length > 0 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm">
-                Halaman {pagination.page} dari {pagination.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
+      {/* DataTable */}
+      <DataTable
+        data={persons}
+        columns={columns}
+        loading={loading}
+        emptyMessage="Tidak ada data tertanggung"
+        pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: handlePageChange,
+        }}
+        sorting={{
+            sortBy,
+            sortOrder: sortOrder as 'asc' | 'desc',
+            onSort: handleSort,
+        }}
+      />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -115,7 +115,7 @@ export function PolicyFormPage() {
     const fetchData = async () => {
       try {
         const [agentsRes, insuredRes] = await Promise.all([
-          fetch('/api/agents'),
+          fetch('/api/agents?status=ACTIVE&limit=1000'),
           fetch('/api/insured-persons/dropdown'),
         ])
 

@@ -1,14 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Plus,
   Search,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Edit,
   Trash2,
-  FileText,
   Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,15 +15,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
@@ -44,6 +32,7 @@ import {
 } from '@/components/ui/dialog'
 import { ExportButton } from '@/components/ExportButton'
 import type { Policy, PolicyStatus, ProductCode, PaginatedResponse } from '@/types'
+import { DataTable, type Column } from '@/components/common/DataTable'
 
 const statusColors: Record<PolicyStatus, string> = {
   DRAFT: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200',
@@ -101,7 +90,7 @@ export function PolicyListPage() {
 
   // Use custom hooks
   const debouncedSearch = useDebounce(localSearch, 300)
-  const { deletePolicy, isDeleting } = usePolicy()
+  const { deletePolicy, isDeleting, stats, fetchStats } = usePolicy()
 
   // Get filter values from URL
   const status = searchParams.get('status') || ''
@@ -139,19 +128,23 @@ export function PolicyListPage() {
 
   // Effect to sync debounced search with URL
   useEffect(() => {
-    setSearchParams((prev) => {
-      if (debouncedSearch) {
-        prev.set('search', debouncedSearch)
-      } else {
-        prev.delete('search')
-      }
-      prev.set('page', '1')
-      return prev
-    })
-  }, [debouncedSearch, setSearchParams])
+    const currentSearch = searchParams.get('search') || ''
+    if (debouncedSearch !== currentSearch) {
+      setSearchParams((prev) => {
+        if (debouncedSearch) {
+          prev.set('search', debouncedSearch)
+        } else {
+          prev.delete('search')
+        }
+        prev.set('page', '1')
+        return prev
+      })
+    }
+  }, [debouncedSearch, searchParams, setSearchParams])
 
   useEffect(() => {
     fetchPolicies()
+    fetchStats()
   }, [debouncedSearch, status, productCode, sortBy, sortOrder, page])
 
   const handleSearch = (value: string) => {
@@ -184,8 +177,8 @@ export function PolicyListPage() {
 
   const handleSort = (field: string) => {
     setSearchParams((prev) => {
-      const currentSortBy = prev.get('sortBy')
-      const currentSortOrder = prev.get('sortOrder')
+      const currentSortBy = prev.get('sortBy') || 'createdAt'
+      const currentSortOrder = prev.get('sortOrder') || 'desc'
 
       if (currentSortBy === field) {
         prev.set('sortOrder', currentSortOrder === 'asc' ? 'desc' : 'asc')
@@ -216,7 +209,81 @@ export function PolicyListPage() {
     setPolicyToDelete(null)
   }
 
-
+  const columns: Column<Policy>[] = useMemo(() => [
+    {
+      key: 'policyNumber',
+      header: 'No. Polis',
+      sortable: true,
+      className: 'font-medium',
+    },
+    {
+      key: 'productName',
+      header: 'Produk',
+      cell: (policy) => (
+        <div>
+          <p className="font-medium">{policy.productName}</p>
+          <p className="text-xs text-muted-foreground">
+            {productLabels[policy.productCode]}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'insuredPerson',
+      header: 'Tertanggung',
+      cell: (policy) => policy.insuredPerson?.fullName || '-',
+    },
+    {
+      key: 'premiumAmount',
+      header: 'Premi',
+      sortable: true,
+      cell: (policy) => formatCurrency(policy.premiumAmount),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (policy) => (
+        <Badge variant="outline" className={`${statusColors[policy.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
+          {statusLabels[policy.status]}
+        </Badge>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Dibuat',
+      sortable: true,
+      cell: (policy) => formatDate(policy.createdAt),
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      className: 'text-right',
+      cell: (policy) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/policies/${policy.id}`}>
+              <Eye className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/policies/${policy.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setPolicyToDelete(policy)
+              setDeleteDialogOpen(true)
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ], []);
 
   return (
     <div className="space-y-6">
@@ -251,6 +318,46 @@ export function PolicyListPage() {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Polis</CardTitle>
+            <Eye className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-green-600">Aktif</CardTitle>
+            <Eye className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.active}</div>}
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-sm ring-1 ring-inset ring-emerald-200 bg-emerald-50/50">
+           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-600">Total Premi</CardTitle>
+             <Eye className="h-4 w-4 text-emerald-600" />
+           </CardHeader>
+           <CardContent>
+             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-emerald-600" /></div> : <div className="text-xl font-bold text-emerald-700">{formatCurrency(stats.totalPremium)}</div>}
+           </CardContent>
+         </Card>
+         <Card className="border-0 shadow-sm ring-1 ring-inset ring-amber-200 bg-amber-50/50">
+           <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-amber-600">Total UP</CardTitle>
+             <Eye className="h-4 w-4 text-amber-600" />
+           </CardHeader>
+           <CardContent>
+             {loading || !stats ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-amber-600" /></div> : <div className="text-xl font-bold text-amber-700">{formatCurrency(stats.totalSumAssured)}</div>}
+           </CardContent>
+         </Card>
       </div>
 
       {/* Filters */}
@@ -292,139 +399,25 @@ export function PolicyListPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
-        <CardContent className="p-0">
-          <Table>
-              <TableHeader className="bg-gray-50/50">
-                <TableRow className="hover:bg-transparent border-b">
-                  <TableHead
-                    className="cursor-pointer font-semibold text-gray-900"
-                    onClick={() => handleSort('policyNumber')}
-                  >
-                    No. Polis {sortBy === 'policyNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-900">Produk</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Tertanggung</TableHead>
-                  <TableHead
-                    className="cursor-pointer font-semibold text-gray-900"
-                    onClick={() => handleSort('premiumAmount')}
-                  >
-                    Premi {sortBy === 'premiumAmount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                  <TableHead
-                    className="cursor-pointer font-semibold text-gray-900"
-                    onClick={() => handleSort('createdAt')}
-                  >
-                    Dibuat {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-900">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-            <TableBody>
-              {loading ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : policies.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">Tidak ada data polis</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                policies.map((policy) => (
-                  <TableRow key={policy.id} className="hover:bg-blue-50/40 transition-colors">
-                    <TableCell className="font-medium">{policy.policyNumber}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{policy.productName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {productLabels[policy.productCode]}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{policy.insuredPerson?.fullName || '-'}</TableCell>
-                    <TableCell>{formatCurrency(policy.premiumAmount)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`${statusColors[policy.status]} pointer-events-none rounded-md px-2.5 py-0.5 font-medium`}>
-                        {statusLabels[policy.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(policy.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/policies/${policy.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link to={`/policies/${policy.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setPolicyToDelete(policy)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-
-        {/* Pagination */}
-        {!loading && policies.length > 0 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm">
-                Halaman {pagination.page} dari {pagination.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
+      {/* DataTable */}
+      <DataTable
+        data={policies}
+        columns={columns}
+        loading={loading}
+        emptyMessage="Tidak ada data polis"
+        pagination={{
+            page: pagination.page,
+            limit: pagination.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            onPageChange: handlePageChange,
+        }}
+        sorting={{
+            sortBy,
+            sortOrder: sortOrder as 'asc' | 'desc',
+            onSort: handleSort,
+        }}
+        />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

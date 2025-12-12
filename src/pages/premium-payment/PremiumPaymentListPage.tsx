@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
@@ -6,9 +6,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUpDown,
   CreditCard,
   Check,
   Clock,
@@ -18,10 +15,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -38,6 +36,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { PremiumPayment, Policy } from '@/types';
+import { DataTable, type Column } from '@/components/common/DataTable';
 
 interface PaymentWithPolicy extends PremiumPayment {
   policy?: Policy;
@@ -64,7 +63,7 @@ export function PremiumPaymentListPage() {
   const [localSearch, setLocalSearch] = useState('');
   const [status, setStatus] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -146,6 +145,79 @@ export function PremiumPaymentListPage() {
     }).format(amount);
   };
 
+  const columns: Column<PaymentWithPolicy>[] = useMemo(() => [
+    {
+      key: 'paymentNumber',
+      header: 'No. Pembayaran',
+      sortable: true,
+      className: 'font-medium',
+    },
+    {
+      key: 'policy',
+      header: 'Polis',
+      className: 'text-sm',
+      cell: (payment) => (
+        <span>{payment.policy?.policyNumber || payment.policyId}</span>
+      ),
+    },
+    {
+      key: 'amount',
+      header: 'Jumlah',
+      sortable: true,
+      className: 'font-medium',
+      cell: (payment) => formatCurrency(payment.amount),
+    },
+    {
+      key: 'dueDate',
+      header: 'Jatuh Tempo',
+      className: 'text-sm',
+    },
+    {
+      key: 'method',
+      header: 'Metode',
+      className: 'text-sm',
+      cell: (payment) => (
+        <span>{payment.method ? methodLabels[payment.method] : '-'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (payment) => (
+        <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium ${statusConfig[payment.status]?.className}`}>
+          {statusConfig[payment.status]?.icon}
+          {statusConfig[payment.status]?.label}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      className: 'text-right',
+      cell: (payment) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/premium-payments/${payment.id}`}>
+              <Eye className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/premium-payments/${payment.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDeleteId(payment.id)}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ], []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -174,7 +246,7 @@ export function PremiumPaymentListPage() {
             <CreditCard className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-gray-500" /></div> : <div className="text-2xl font-bold text-gray-900">{stats.total}</div>}
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm ring-1 ring-inset ring-green-200 bg-green-50/50">
@@ -183,7 +255,7 @@ export function PremiumPaymentListPage() {
             <Check className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{stats.paid}</div>
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-green-600" /></div> : <div className="text-2xl font-bold text-green-700">{stats.paid}</div>}
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm ring-1 ring-inset ring-yellow-200 bg-yellow-50/50">
@@ -192,7 +264,7 @@ export function PremiumPaymentListPage() {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-yellow-600" /></div> : <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>}
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm ring-1 ring-inset ring-blue-200 bg-blue-50/50">
@@ -201,7 +273,7 @@ export function PremiumPaymentListPage() {
             <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-blue-700">{formatCurrency(stats.totalAmount)}</div>
+            {loading ? <div className="flex justify-start"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : <div className="text-xl font-bold text-blue-700">{formatCurrency(stats.totalAmount)}</div>}
           </CardContent>
         </Card>
       </div>
@@ -236,119 +308,25 @@ export function PremiumPaymentListPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card className="border-0 shadow-sm ring-1 ring-inset ring-gray-200 overflow-hidden">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : payments.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground">
-              Tidak ada data pembayaran
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b bg-gray-50/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      <button onClick={() => toggleSort('paymentNumber')} className="flex items-center gap-1">
-                        No. Pembayaran <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Polis</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
-                      <button onClick={() => toggleSort('amount')} className="flex items-center gap-1">
-                        Jumlah <ArrowUpDown className="h-3 w-3" />
-                      </button>
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Jatuh Tempo</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Metode</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="border-b hover:bg-blue-50/40 transition-colors">
-                      <td className="px-4 py-3 font-medium">{payment.paymentNumber}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {payment.policy?.policyNumber || payment.policyId}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{formatCurrency(payment.amount)}</td>
-                      <td className="px-4 py-3 text-sm">{payment.dueDate}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {payment.method ? methodLabels[payment.method] : '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium ${statusConfig[payment.status]?.className}`}>
-                          {statusConfig[payment.status]?.icon}
-                          {statusConfig[payment.status]?.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/premium-payments/${payment.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/premium-payments/${payment.id}/edit`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(payment.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-
-
-      {/* Pagination */}
-      {(!loading && payments.length > 0) && (
-        <div className="flex items-center justify-between border-t px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Menampilkan {(page - 1) * 10 + 1} - {Math.min(page * 10, stats.total)} dari {stats.total} data
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">
-                Halaman {page} dari {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-        </div>
-      )}
-      </Card>
+      {/* DataTable */}
+      <DataTable
+        data={payments}
+        columns={columns}
+        loading={loading}
+        emptyMessage="Tidak ada data pembayaran"
+        pagination={{
+          page,
+          limit: 10,
+          total: stats.total,
+          totalPages,
+          onPageChange: setPage,
+        }}
+        sorting={{
+          sortBy,
+          sortOrder,
+          onSort: toggleSort,
+        }}
+      />
 
       {/* Delete Dialog */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

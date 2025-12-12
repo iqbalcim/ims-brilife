@@ -5,8 +5,11 @@ import {
   BarChart3,
   ArrowUpRight,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface StatsCardsProps {
   policyStats: {
@@ -19,9 +22,10 @@ interface StatsCardsProps {
     total: number
     active: number
   } | null
+  loading?: boolean
 }
 
-export function StatsCards({ policyStats, insuredStats }: StatsCardsProps) {
+export function StatsCards({ policyStats, insuredStats, loading }: StatsCardsProps) {
   const formatCurrency = (value: number) => {
     if (value >= 1_000_000_000) {
       return `Rp ${(value / 1_000_000_000).toFixed(1)}M`
@@ -51,7 +55,11 @@ export function StatsCards({ policyStats, insuredStats }: StatsCardsProps) {
           <FileText className="h-5 w-5 text-blue-200" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{policyStats?.total || 0}</div>
+          {loading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-blue-100" />
+          ) : (
+            <div className="text-3xl font-bold">{policyStats?.total || 0}</div>
+          )}
           <div className="mt-1 flex items-center gap-1 text-sm text-blue-100">
             <ArrowUpRight className="h-4 w-4" />
             <span>{activePercentage}% aktif</span>
@@ -67,7 +75,11 @@ export function StatsCards({ policyStats, insuredStats }: StatsCardsProps) {
           <Users className="h-5 w-5 text-purple-200" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{insuredStats?.total || 0}</div>
+          {loading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-purple-100" />
+          ) : (
+            <div className="text-3xl font-bold">{insuredStats?.total || 0}</div>
+          )}
           <div className="mt-1 flex items-center gap-1 text-sm text-purple-100">
             <CheckCircle2 className="h-4 w-4" />
             <span>{insuredStats?.active || 0} aktif</span>
@@ -83,7 +95,11 @@ export function StatsCards({ policyStats, insuredStats }: StatsCardsProps) {
           <TrendingUp className="h-5 w-5 text-emerald-200" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(policyStats?.totalPremium || 0)}</div>
+          {loading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-100" />
+          ) : (
+             <div className="text-2xl font-bold">{formatCurrency(policyStats?.totalPremium || 0)}</div>
+          )}
           <div className="mt-1 text-sm text-emerald-100">Per bulan</div>
         </CardContent>
       </Card>
@@ -96,7 +112,11 @@ export function StatsCards({ policyStats, insuredStats }: StatsCardsProps) {
           <BarChart3 className="h-5 w-5 text-amber-200" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(policyStats?.totalSumAssured || 0)}</div>
+          {loading ? (
+            <Loader2 className="h-8 w-8 animate-spin text-amber-100" />
+          ) : (
+            <div className="text-2xl font-bold">{formatCurrency(policyStats?.totalSumAssured || 0)}</div>
+          )}
           <div className="mt-1 text-sm text-amber-100">Total coverage</div>
         </CardContent>
       </Card>
