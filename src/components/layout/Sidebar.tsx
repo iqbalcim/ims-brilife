@@ -13,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { useAuthStore } from '@/store'
+import type { UserRole } from '@/types'
 
 interface SidebarProps {
   isCollapsed: boolean
@@ -23,18 +25,24 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
+  roles: UserRole[]
 }
 
 const navItems: NavItem[] = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Polis', href: '/policies', icon: FileText },
-  { title: 'Tertanggung', href: '/insured-persons', icon: Users },
-  { title: 'Pembayaran', href: '/premium-payments', icon: CreditCard },
-  { title: 'Agen', href: '/agents', icon: UserCog },
+  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'AGENT'] },
+  { title: 'Polis', href: '/policies', icon: FileText, roles: ['ADMIN', 'AGENT'] },
+  { title: 'Tertanggung', href: '/insured-persons', icon: Users, roles: ['ADMIN', 'AGENT'] },
+  { title: 'Pembayaran', href: '/premium-payments', icon: CreditCard, roles: ['ADMIN', 'AGENT'] },
+  { title: 'Agen', href: '/agents', icon: UserCog, roles: ['ADMIN'] },
 ]
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation()
+  const { user } = useAuthStore()
+
+  const filteredNavItems = navItems.filter(
+    (item) => user?.role && item.roles.includes(user.role)
+  )
 
   return (
     <aside className={cn('relative flex h-full flex-col border-r bg-card transition-all duration-300', isCollapsed ? 'w-16' : 'w-64')}>
@@ -55,7 +63,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1.5 px-3">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname.startsWith(item.href)
             const Icon = item.icon
             return (

@@ -141,11 +141,11 @@ export function DataTable<T extends { id: string | number }>({
 
         {/* Pagination Footer */}
         {!loading && data.length > 0 && pagination && (
-          <div className="flex items-center justify-between border-t px-4 py-3 bg-background">
-            <p className="text-sm text-muted-foreground w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3 bg-background">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
               Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
             </p>
-            <Pagination className="justify-end w-auto mx-0">
+            <Pagination className="justify-center sm:justify-end w-auto mx-0">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
